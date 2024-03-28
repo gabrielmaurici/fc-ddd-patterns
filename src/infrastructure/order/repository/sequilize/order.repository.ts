@@ -3,6 +3,7 @@ import Order from "../../../../domain/checkout/entity/order";
 import OrderItemModel from "./order-item.model";
 import OrderModel from "./order.model";
 import { Op } from "sequelize";
+import OrderItem from "../../../../domain/checkout/entity/order_item";
 
 export default class OrderRepository implements OrderRepositoryInterface{
 
@@ -71,7 +72,25 @@ export default class OrderRepository implements OrderRepositoryInterface{
   }
 
   async find(id: string): Promise<Order> {
-    throw new Error("Method not implemented.");
+    let orderModel;
+
+    try {
+      orderModel = await OrderModel.findOne(
+      { 
+        where: { id: id },
+        include: [{model: OrderItemModel}],
+        rejectOnEmpty: true
+      });
+    } catch (error) {
+      throw new Error("Order not found");
+    };
+
+    const orderItems: OrderItem[] = [];
+    orderModel.items.forEach(item => {
+      orderItems.push(new OrderItem(item.id, item.name, item.price, item.product_id, item.quantity));
+    });
+
+    return new Order(orderModel.id, orderModel.customer_id, orderItems);
   }
 
   async findAll(): Promise<Order[]> {

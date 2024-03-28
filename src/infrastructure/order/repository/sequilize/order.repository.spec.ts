@@ -150,7 +150,7 @@ describe("Order repository test", () => {
       where: { id: order.id },
       include: ["items"],
     });
-    
+
     expect(orderModelUpdate.toJSON()).toStrictEqual({
       id: "123",
       customer_id: "123",
@@ -268,5 +268,43 @@ describe("Order repository test", () => {
         },
       ],
     });
+  });
+
+  it("should find a order", async () => {
+    const customerRepository = new CustomerRepository();
+    const customer = new Customer("123", "Customer 1");
+    const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
+    customer.changeAddress(address);
+    await customerRepository.create(customer);
+
+    const productRepository = new ProductRepository();
+    const product = new Product("123", "Product 1", 10);
+    await productRepository.create(product);
+
+    const orderItem = new OrderItem(
+      "1",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
+
+    const order = new Order("123", "123", [orderItem]);
+
+    const orderRepository = new OrderRepository();
+    await orderRepository.create(order);
+
+    const orderModel = await orderRepository.find(order.id);
+
+    expect(orderModel).toStrictEqual(order);
+  });
+
+  it("should throw exception when Order not found", async () => {
+
+    expect(async () => {
+      const orderRepository = new OrderRepository();
+
+      await orderRepository.find("1sas2");
+    }).rejects.toThrow("Order not found");
   });
 });
