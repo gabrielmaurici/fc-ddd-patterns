@@ -57,4 +57,22 @@ describe("Order unit tests", () => {
     let totalItemsWithNewItem = order.items.length;
     expect(totalItemsWithNewItem).toBe(4);
   });
+
+  it("should remove a order item", () => {
+    const item = new OrderItem("i1", "Item 1", 100, "p1", 2);
+    const item2 = new OrderItem("i2", "Item 2", 200, "p2", 2);
+    const order = new Order("o1", "c1", [item, item2]);
+
+    let totalItems = order.items.length;
+    expect(totalItems).toBe(2);
+
+    order.removeItem(item.id);
+
+    let totalItemsWithNewItem = order.items.length;
+
+    var itemExists = order.items.find(x => x.id === item.id);
+
+    expect(totalItemsWithNewItem).toBe(1);
+    expect(itemExists).toBe(undefined);
+  });
 });

@@ -2,7 +2,7 @@ import OrderRepositoryInterface from "../../../../domain/checkout/repository/ord
 import Order from "../../../../domain/checkout/entity/order";
 import OrderItemModel from "./order-item.model";
 import OrderModel from "./order.model";
-import { where } from "sequelize";
+import { Op } from "sequelize";
 
 export default class OrderRepository implements OrderRepositoryInterface{
 
@@ -38,6 +38,14 @@ export default class OrderRepository implements OrderRepositoryInterface{
           name: item.name,
           price: item.price
         })
+      }
+    });
+
+    const existingItemIds = entity.items.map(item => item.id);
+    await OrderItemModel.destroy({
+      where: {
+        order_id: entity.id,
+        id: { [Op.notIn]: existingItemIds }
       }
     });
 

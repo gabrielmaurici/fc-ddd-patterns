@@ -1,6 +1,5 @@
 import OrderItem from "./order_item";
 export default class Order {
-
   private _id: string;
   private _customerId: string;
   private _items: OrderItem[];
@@ -50,5 +49,10 @@ export default class Order {
 
   addNewItems(items: OrderItem[]): void {
     this._items.push(...items);
+  }
+
+  removeItem(id: string): void {
+    var itemIndex = this.items.findIndex(x => x.id === id);
+    this.items.splice(itemIndex, 1);
   }
 }

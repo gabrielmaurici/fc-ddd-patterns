@@ -98,7 +98,7 @@ describe("Order repository test", () => {
       product.name,
       product.price,
       product.id,
-      2
+      1
     );
 
     const order = new Order("123", "123", [orderItem]);
@@ -131,7 +131,7 @@ describe("Order repository test", () => {
       product.name,
       product.price,
       product.id,
-      4
+      2
     );
 
     const newOrderItem2 = new OrderItem(
@@ -150,7 +150,7 @@ describe("Order repository test", () => {
       where: { id: order.id },
       include: ["items"],
     });
-
+    
     expect(orderModelUpdate.toJSON()).toStrictEqual({
       id: "123",
       customer_id: "123",
@@ -166,6 +166,67 @@ describe("Order repository test", () => {
         },
         {
           id: newOrderItem1.id,
+          name: newOrderItem1.name,
+          price: newOrderItem1.price,
+          quantity: newOrderItem1.quantity,
+          order_id: "123",
+          product_id: "123",
+        },
+        {
+          id: newOrderItem2.id,
+          name: newOrderItem2.name,
+          price: newOrderItem2.price,
+          quantity: newOrderItem2.quantity,
+          order_id: "123",
+          product_id: "123",
+        },
+      ],
+    });
+  });
+
+  it("should update order without the removed item", async () => {
+    const customerRepository = new CustomerRepository();
+    const customer = new Customer("123", "Customer 1");
+    const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
+    customer.changeAddress(address);
+    await customerRepository.create(customer);
+
+    const productRepository = new ProductRepository();
+    const product = new Product("123", "Product 1", 10);
+    await productRepository.create(product);
+
+    const orderItem = new OrderItem(
+      "1",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
+
+    const orderItem2 = new OrderItem(
+      "2",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
+
+    const order = new Order("123", "123", [orderItem, orderItem2]);
+    const orderRepository = new OrderRepository();
+    await orderRepository.create(order);
+
+    const orderModel = await OrderModel.findOne({
+      where: { id: order.id },
+      include: ["items"],
+    });
+
+    expect(orderModel.toJSON()).toStrictEqual({
+      id: "123",
+      customer_id: "123",
+      total: order.total(),
+      items: [
+        {
+          id: orderItem.id,
           name: orderItem.name,
           price: orderItem.price,
           quantity: orderItem.quantity,
@@ -173,7 +234,32 @@ describe("Order repository test", () => {
           product_id: "123",
         },
         {
-          id: newOrderItem2.id,
+          id: orderItem2.id,
+          name: orderItem.name,
+          price: orderItem.price,
+          quantity: orderItem.quantity,
+          order_id: "123",
+          product_id: "123",
+        },
+      ],
+    });
+
+    order.removeItem(orderItem.id);
+
+    await orderRepository.update(order);
+
+    const orderModelUpdate = await OrderModel.findOne({
+      where: { id: order.id },
+      include: ["items"],
+    });
+
+    expect(orderModelUpdate.toJSON()).toStrictEqual({
+      id: "123",
+      customer_id: "123",
+      total: order.total(),
+      items: [
+        {
+          id: orderItem2.id,
           name: orderItem.name,
           price: orderItem.price,
           quantity: orderItem.quantity,
