@@ -294,9 +294,9 @@ describe("Order repository test", () => {
     const orderRepository = new OrderRepository();
     await orderRepository.create(order);
 
-    const orderModel = await orderRepository.find(order.id);
+    const orderFind = await orderRepository.find(order.id);
 
-    expect(orderModel).toStrictEqual(order);
+    expect(orderFind).toStrictEqual(order);
   });
 
   it("should throw exception when Order not found", async () => {
@@ -306,5 +306,55 @@ describe("Order repository test", () => {
 
       await orderRepository.find("1sas2");
     }).rejects.toThrow("Order not found");
+  });
+
+  it("should find all orders", async () => {
+    const customerRepository = new CustomerRepository();
+    const customer = new Customer("123", "Customer 1");
+    const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
+    customer.changeAddress(address);
+    await customerRepository.create(customer);
+
+    const productRepository = new ProductRepository();
+    const product = new Product("123", "Product 1", 10);
+    await productRepository.create(product);
+
+    const orderItem = new OrderItem(
+      "1",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
+
+    const order = new Order("123", "123", [orderItem]);
+
+    const orderItem2 = new OrderItem(
+      "2",
+      product.name,
+      product.price,
+      product.id,
+      4
+    );
+
+    const order2 = new Order("150", "123", [orderItem2]);
+
+    const orderRepository = new OrderRepository();
+    await orderRepository.create(order);
+    await orderRepository.create(order2);
+
+    const ordersFind = await orderRepository.findAll();
+    
+    expect(ordersFind.find(x => x.id === order.id)).toStrictEqual(order);
+    expect(ordersFind.find(x => x.id === order2.id)).toStrictEqual(order2);
+  });
+
+  it("should throw exception when no Orders registered", async () => {
+
+    expect(async () => {
+      const orderRepository = new OrderRepository();
+
+      await orderRepository.findAll();
+    }).rejects.toThrow("No orders registered");
   });
 });

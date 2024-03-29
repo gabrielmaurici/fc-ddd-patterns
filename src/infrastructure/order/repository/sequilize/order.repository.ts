@@ -8,23 +8,28 @@ import OrderItem from "../../../../domain/checkout/entity/order_item";
 export default class OrderRepository implements OrderRepositoryInterface{
 
   async create(entity: Order): Promise<void> {
-    await OrderModel.create(
-      {
-        id: entity.id,
-        customer_id: entity.customerId,
-        total: entity.total(),
-        items: entity.items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          product_id: item.productId,
-          quantity: item.quantity,
-        })),
-      },
-      {
-        include: [{ model: OrderItemModel }],
-      }
-    );
+    try {
+      
+      await OrderModel.create(
+        {
+          id: entity.id,
+          customer_id: entity.customerId,
+          total: entity.total(),
+          items: entity.items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            product_id: item.productId,
+            quantity: item.quantity,
+          })),
+        },
+        {
+          include: [{ model: OrderItemModel }],
+        }
+      );
+    } catch (error) {
+      console.log(error + " teste aqui")
+    }
   }
 
   async update(entity: Order): Promise<void> {
@@ -76,14 +81,14 @@ export default class OrderRepository implements OrderRepositoryInterface{
 
     try {
       orderModel = await OrderModel.findOne(
-      { 
-        where: { id: id },
-        include: [{model: OrderItemModel}],
-        rejectOnEmpty: true
-      });
-    } catch (error) {
-      throw new Error("Order not found");
-    };
+        { 
+          where: { id: id },
+          include: [{model: OrderItemModel}],
+          rejectOnEmpty: true
+        });
+    }catch (error) {
+      throw new Error("Order not found")
+    }
 
     const orderItems: OrderItem[] = [];
     orderModel.items.forEach(item => {
@@ -94,6 +99,23 @@ export default class OrderRepository implements OrderRepositoryInterface{
   }
 
   async findAll(): Promise<Order[]> {
-    throw new Error("Method not implemented.");
+    let ordersModel;
+    try {
+      ordersModel = await OrderModel.findAll({ include: [{model: OrderItemModel}]});
+    } catch (error) {
+      throw new Error("No orders registered");
+    }
+
+    const orders: Order[] = [];
+    ordersModel.forEach(order => {
+      const orderItems: OrderItem[] = [];
+      order.items.forEach(async item => {
+        orderItems.push(new OrderItem(item.id, item.name, item.price, item.product_id, item.quantity));
+      });
+
+      orders.push(new Order(order.id, order.customer_id, orderItems));
+    })
+
+    return orders;
   }
 }
